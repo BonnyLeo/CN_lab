@@ -1,0 +1,9 @@
+{
+    "C_Cpp.errorSquiggles": "Disabled",
+    "files.associations": {
+        "*.tcc": "c",
+        "complex": "c",
+        "fstream": "c",
+        "system_error": "c"
+    }
+}
