@@ -3,6 +3,7 @@
 # include <sys/socket.h>
 # include <arpa/inet.h>
 # include <unistd.h>
+# include <time.h>
 
 # define PORT 8080
 
@@ -10,6 +11,10 @@ int chat(int socket_fd,struct sockaddr_in client_addr){
 
     int client_addr_len =sizeof(client_addr);
     char server_msg[1000],client_msg[1000];
+    
+    time_t t;
+    time(&t);    
+    char *a = ctime(&t);
 
     while(1){
         memset(server_msg,'\0',sizeof(server_msg));

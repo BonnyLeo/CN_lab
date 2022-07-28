@@ -5,43 +5,49 @@
 # include <netinet/in.h>    // has structure sockaddr_in defined
 # include <unistd.h>        // has close()
 # include <arpa/inet.h>     // has inet_addr
+# include <sys/time.h>      // for time
 
 # define PORT 8080
 
 // function to chat
-int chat(int client_fd){
-    while(1){
-        char server_msg[1000],client_msg[1000];
+void transfer (int socket_fd){
+    
+    struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
 
-        // clear buffers
-        memset(server_msg,'\0',sizeof(server_msg));
-        memset(client_msg,'\0',sizeof(client_msg));
+    setsockopt(socket_fd,SOL_SOCKET,SO_RCVTIMEO,(const char *)&tv,sizeof(tv));
+    printf("\nSend\tFrame status\tACK status\n");
+    
+    int frame_no,frame_mod2=0,prev_frame_mod2,skip=0;
 
-        // Recieve client's message
-        if(recv(client_fd,client_msg,sizeof(client_msg),0) < 0){
-            printf("error reading client message\n");
-            return -1;
+    for(frame_no=0;frame_no<10;frame_no++){
+        prev_frame_mod2 = frame_mod2;
+
+        LABEL:
+            skip++;
+            frame_mod2 = frame_no % 2;
+            write(socket_fd,&frame_mod2,sizeof(frame_mod2));
+            printf("\n%d\t Frame no:%d\t", frame_no, frame_mod2);
+
+            if (skip == 3){
+                printf("ACK missing");
+                goto LABEL;
+            }
+
+            if (read(socket_fd,&frame_mod2,sizeof(frame_mod2))){
+                if (frame_mod2 == prev_frame_mod2){
+                    printf("frame missing");
+                    goto LABEL;
+
+            }
+            else
+                printf("ACK no:%d", frame_mod2);
         }
 
-        // Exiting condition
-        if (strcmp(client_msg,"exit") == 0 ){
-            printf("Client requests exit.\nexiting . . .");
-            exit(0);
-        }
-        printf("client message: %s\n",client_msg);
-
-        // Get input from user
-        printf("enter ur message: ");
-        scanf("%s",&server_msg);
-
-        // Send the msg to server
-        if(send(client_fd,server_msg,sizeof(server_msg),0) < 0){
-            printf("error while sending the message\n");
-            return -1;
-        }
 
     }
-    return 0;
+
 }
 
 int main(){
@@ -84,7 +90,7 @@ else{
     exit(0);
 }
 
-chat(client_fd);
+transfer(client_fd);
 
 close(client_fd);
 close(socket_fd);

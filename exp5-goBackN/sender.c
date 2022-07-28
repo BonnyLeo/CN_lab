@@ -5,43 +5,43 @@
 # include <netinet/in.h>    // has structure sockaddr_in defined
 # include <unistd.h>        // has close()
 # include <arpa/inet.h>     // has inet_addr
+# include <time.h>      // for time
+
 
 # define PORT 8080
 
 // function to chat
-int chat(int client_fd){
-    while(1){
-        char server_msg[1000],client_msg[1000];
+void transfer (int socket_fd){
+    struct timeval tv;
+    tv.tv_sec=1;
+    tv.tv_usec=0;
+    srand(time(NULL));
+    setsockopt(socket_fd,SOL_SOCKET,SO_RCVBUF,&tv,sizeof(tv));
 
-        // clear buffers
-        memset(server_msg,'\0',sizeof(server_msg));
-        memset(client_msg,'\0',sizeof(client_msg));
+    int frame_no,frame_no_mod4,head=0,tail=0,ack=-1;
 
-        // Recieve client's message
-        if(recv(client_fd,client_msg,sizeof(client_msg),0) < 0){
-            printf("error reading client message\n");
-            return -1;
+    for (frame_no=0;frame_no<10;frame_no++){
+
+        if( (tail-head)> 4 || frame_no==9){
+            printf("\nTimeout resend from %d\n\n", head);
+            head = tail;
+            frame_no = head;
         }
+        int flag = rand() % 2;
+        printf("Frame %d send\n", tail);
+        if (flag)
+        write(socket_fd,&tail,sizeof(tail));
+        tail++;        
 
-        // Exiting condition
-        if (strcmp(client_msg,"exit") == 0 ){
-            printf("Client requests exit.\nexiting . . .");
-            exit(0);
+        read(socket_fd,&ack,sizeof(ack));
+
+        if(ack != -1){
+            head++;
+            printf("ACK %d\n", ack);
         }
-        printf("client message: %s\n",client_msg);
-
-        // Get input from user
-        printf("enter ur message: ");
-        scanf("%s",&server_msg);
-
-        // Send the msg to server
-        if(send(client_fd,server_msg,sizeof(server_msg),0) < 0){
-            printf("error while sending the message\n");
-            return -1;
-        }
-
     }
-    return 0;
+    
+
 }
 
 int main(){
@@ -84,7 +84,7 @@ else{
     exit(0);
 }
 
-chat(client_fd);
+transfer(client_fd);
 
 close(client_fd);
 close(socket_fd);

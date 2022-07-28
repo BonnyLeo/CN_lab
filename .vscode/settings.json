@@ -1,9 +1,13 @@
 {
     "C_Cpp.errorSquiggles": "Disabled",
     "files.associations": {
+        "*.rmd": "markdown",
         "*.tcc": "c",
         "complex": "c",
         "fstream": "c",
-        "system_error": "c"
+        "system_error": "c",
+        "socket.h": "c",
+        "stdlib.h": "c",
+        "unistd.h": "c"
     }
 }
